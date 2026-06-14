@@ -1,0 +1,127 @@
+id: sovereign-memory-bank
+title: Sovereign Memory Bank
+version: 0.1.0
+status: draft
+purpose: >
+  Build an autonomous cognitive memory system that ingests kbmd/ markdown
+  documents and creates a continuously evolving memory architecture
+  optimized for agent reasoning and synthesis — not retrieval. The system
+  must generate novel insights not explicitly present in the source
+  documents, serving as a writable cognitive substrate for AI agents.
+requirements:
+  - The system must ingest markdown documents from the kbmd/ directory as source artifacts
+  - The system must extract atomic memory objects (concepts, claims, entities, relationships) from source documents
+  - The system must organize knowledge into a multi-layer memory architecture (Layers 0 through 6)
+  - The system must represent every significant idea simultaneously as multiple cognitive artifacts (concept object, claim object, graph node, embedding)
+  - The system must create emergent knowledge structures not explicitly present in source material, including synthesized concepts, meta-concepts, and novel relationships
+  - The system must autonomously evolve its memory through periodic evolution cycles
+  - The system must detect and store contradictions as first-class memory objects rather than deleting them
+  - The system must periodically generate knowledge syntheses from concepts, claims, relationships, narratives, and insights
+  - The system must maintain a knowledge graph supporting multi-hop reasoning with typed nodes and edges
+  - The system must maintain vector embeddings for semantic recall alongside graph traversal
+  - The system must provide an agent interface allowing read, create, modify, and reorganize operations on memory objects
+  - The system must support agent reasoning across tens of thousands of source documents
+  - The system must discover relationships not explicitly stated in source material
+  - The system must construct higher-order abstractions automatically
+  - The system must evolve its own knowledge organization over time
+constraints:
+  - Source memory artifacts (Layer 0) must be immutable once ingested
+  - The system must operate locally-first with no cloud API dependency
+  - Contradictions must never be silently deleted; they are stored as first-class memory objects
+  - Memory objects must follow the standard format with id, type, confidence, created, modified, status, embedding_id, and graph_node_id fields
+  - The graph must use only the defined edge types: references, supports, contradicts, extends, derives_from, inspired_by, evolves_into, related_to, contains, explains
+  - The graph must use only the defined node types: concepts, entities, claims, insights, narratives, abstractions
+dependencies: []
+acceptance_criteria:
+  - An agent can reason across tens of thousands of source documents without degradation
+  - The system discovers and records relationships not explicitly stated in any single source document
+  - The system generates coherent syntheses spanning years of accumulated knowledge
+  - Higher-order abstractions are constructed automatically without manual intervention
+  - The knowledge organization evolves autonomously as new documents are ingested
+  - Reasoning performance improves as memory grows, rather than degrading
+  - Contradictions are detected, stored, and used to trigger research questions and synthesis
+  - All memory objects are accessible to agents through the agent interface
+  - Vector search and graph traversal can be combined for hybrid recall
+test_cases:
+  - id: tc-smoke-ingestion
+    description: Basic document ingestion creates memory objects
+    given: A kbmd/ directory containing 10 markdown documents
+    when: The system processes the directory
+    then: At least one concept, one claim, and one entity are created in Layer 1
+  - id: tc-contradiction-detection
+    description: Contradictions between documents are detected and stored
+    given: Two source documents containing contradictory claims about the same topic
+    when: The system processes both documents
+    then: A contradiction object is created in memory-bank/contradictions/ and a research question is generated
+  - id: tc-emergent-synthesis
+    description: The system generates novel knowledge not in source material
+    given: Multiple documents covering related but non-overlapping topics
+    when: The system runs its evolution engine
+    then: At least one synthesis or abstraction is created in Layer 4 that does not appear verbatim in any source document
+  - id: tc-graph-multi-hop
+    description: Multi-hop reasoning is supported through the graph
+    given: A graph with nodes connected by at least 3 hops
+    when: An agent queries the graph for indirect relationships
+    then: The system returns valid multi-hop paths between distant nodes
+  - id: tc-autonomous-evolution
+    description: Memory evolves without external intervention
+    given: A memory bank with 100+ concepts that include duplicates and overloaded concepts
+    when: The evolution engine executes a cycle
+    then: Duplicates are merged, overloaded concepts are split, and taxonomy is updated
+  - id: tc-agent-writable
+    description: Agents can create and modify memory objects
+    given: An agent with write access to the memory bank
+    when: The agent creates a new concept and adds a graph relationship
+    then: The concept is persisted and the relationship is queryable
+  - id: tc-vector-graph-hybrid
+    description: Vector search and graph traversal can be combined
+    given: A memory bank with both embeddings and graph relationships
+    when: A semantic query is issued and results are expanded via graph traversal
+    then: Results include both semantically similar nodes and graph-connected neighbors
+performance_requirements:
+  - metric: Reasoning throughput across source documents
+    threshold: Must support reasoning across 10,000+ source documents
+  - metric: Evolution cycle completion time
+    threshold: Must complete a full evolution cycle within a bounded time window for 100,000+ memory objects
+  - metric: Graph multi-hop query latency
+    threshold: Must resolve 3-hop queries within acceptable latency for agent interaction
+security_requirements:
+  - Memory objects must not expose source document contents outside the local filesystem
+  - Agent access to the memory bank must be restricted to the local system
+architecture_notes: >
+  The memory bank is structured as a 7-layer architecture (Layers 0-6).
+  Layer 0 holds immutable source artifacts. Layer 1 extracts atomic memory
+  objects (concepts, claims, entities, relationships). Layer 2 organizes
+  knowledge into taxonomy, clusters, and communities. Layer 3 stores
+  reflective cognition (insights, questions, contradictions). Layer 4
+  contains synthetic memory (abstractions, world-models, meta-concepts,
+  syntheses). Layer 5 maintains narrative memory (narratives, timelines,
+  evolution). Layer 6 holds executive memory (research, specifications,
+  projects, plans). All layers are interconnected via the knowledge graph
+  and vector store, enabling both semantic recall and structural
+  reasoning. The evolution engine periodically traverses all layers to
+  detect duplicates, merge/split concepts, promote abstractions, detect
+  contradictions, and refresh embeddings.
+implementation_hints:
+  - Use YAML-like headers in all memory object markdown files with id, type, confidence, created, modified, status, embedding_id, and graph_node_id
+  - Store memory objects as markdown files in their respective layer directories under memory-bank/
+  - The knowledge graph should be stored as an adjacency structure or in a graph database
+  - Vector embeddings should be stored in a local vector store (e.g., ChromaDB)
+  - The evolution engine should run on a configurable schedule or on trigger events
+  - Contradiction objects should link to the conflicting claims and generate associated research questions
+  - Syntheses should cite their source concepts, claims, and relationships
+non_functional_requirements:
+  - The system must be fully offline with no cloud API dependency
+  - The system must improve reasoning performance as memory grows
+  - The system must be agent-agnostic, accessible through a filesystem-based interface
+  - Memory objects must be human-readable and machine-parseable
+  - The system must handle stale knowledge through deprecation and revision
+related_adrs: []
+tags:
+  - memory-architecture
+  - cognitive-systems
+  - agent-reasoning
+  - knowledge-graph
+  - local-first
+  - autonomous-evolution
+  - sovereign-ai
