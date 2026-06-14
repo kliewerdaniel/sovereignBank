@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -11,26 +11,33 @@ from sovereign_memory_bank.layers.layer_manager import LayerManager
 from sovereign_memory_bank.storage.markdown_store import MarkdownStore
 from sovereign_memory_bank.storage.sqlite_store import SQLiteStore
 from sovereign_memory_bank.storage.vector_store import VectorStore
-from sovereign_memory_bank.graph.graph_store import KnowledgeGraph, GraphNode
-from sovereign_memory_bank.models.enums import GraphNodeType, LayerIndex
+from sovereign_memory_bank.graph.graph_store import KnowledgeGraph, GraphNode, GraphEdge
+from sovereign_memory_bank.models.enums import GraphNodeType, NodeEdgeType, LayerIndex
 from sovereign_memory_bank.ingestion.extractor import Extractor
-from sovereign_memory_bank.ingestion.embedder import Embedder
 from sovereign_memory_bank.ingestion.graph_builder import GraphBuilder
 
 
 class Ingester:
     """Orchestrates document ingestion into the memory bank."""
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, skip_embeddings: bool = False) -> None:
         self.settings = settings
+        self.skip_embeddings = skip_embeddings
         self.layer_manager = LayerManager(settings.memory_bank_dir)
         self.markdown_store = MarkdownStore(self.layer_manager)
         self.sqlite_store = SQLiteStore(settings.sqlite_db_path)
         self.vector_store = VectorStore(settings.chroma_persist_dir, settings.chroma_collection)
         self.graph = KnowledgeGraph(settings.memory_bank_dir / "graph.json")
         self.extractor = Extractor()
-        self.embedder = Embedder(settings)
         self.graph_builder = GraphBuilder(self.graph)
+        self._embedder = None
+
+    @property
+    def embedder(self):
+        if self._embedder is None:
+            from sovereign_memory_bank.ingestion.embedder import Embedder
+            self._embedder = Embedder(self.settings)
+        return self._embedder
 
     async def initialize(self) -> None:
         self.layer_manager.initialize()
@@ -44,17 +51,24 @@ class Ingester:
         if not source_path.exists():
             return {"error": f"Source directory not found: {source_path}"}
 
-        md_files = list(source_path.rglob("*.md"))
-        results = {"files_found": len(md_files), "files_processed": 0, "errors": []}
+        md_files = sorted(source_path.rglob("*.md"))
+        results = {"files_found": len(md_files), "files_processed": 0, "errors": [], "objects_total": 0}
 
-        for md_file in md_files:
+        for i, md_file in enumerate(md_files):
             try:
-                await self.ingest_file(md_file)
+                r = await self.ingest_file(md_file)
                 results["files_processed"] += 1
+                results["objects_total"] += r["objects_extracted"]
+                print(f"  [{i+1}/{len(md_files)}] {md_file.stem} — {r['objects_extracted']} objects", flush=True)
             except Exception as e:
                 results["errors"].append({"file": str(md_file), "error": str(e)})
+                print(f"  [{i+1}/{len(md_files)}] {md_file.stem} — ERROR: {e}", flush=True)
 
-        await self.graph.save()
+            # Save graph every 10 files
+            if (i + 1) % 10 == 0:
+                self.graph.save()
+
+        self.graph.save()
         await self.sqlite_store.close()
         return results
 
@@ -88,27 +102,27 @@ class Ingester:
             # Save metadata
             await self.sqlite_store.save(obj, layer="1")
 
-            # Generate and save embedding
-            embedding = self.embedder.embed(obj)
-            if embedding:
-                self.vector_store.add(
-                    obj_id=obj.id,
-                    text=f"{obj.title} {obj.description}",
-                    embedding=embedding,
-                    metadata={"type": obj.type.value, "source": source_id},
-                )
-                obj.embedding_id = f"emb-{obj.id}"
-                await self.sqlite_store.update_embedding(obj.id, obj.embedding_id)
+            # Generate and save embedding (optional)
+            if not self.skip_embeddings:
+                try:
+                    embedding = self.embedder.embed(obj)
+                    if embedding:
+                        self.vector_store.add(
+                            obj_id=obj.id,
+                            text=f"{obj.title} {obj.description}",
+                            embedding=embedding,
+                            metadata={"type": obj.type.value, "source": source_id},
+                        )
+                        obj.embedding_id = f"emb-{obj.id}"
+                        await self.sqlite_store.update_embedding(obj.id, obj.embedding_id)
+                except Exception:
+                    pass  # Skip embedding on failure
 
             # Add to graph
             node = self.graph_builder.add_memory_node(obj)
             obj.graph_node_id = node.id
-            await self.sqlite_store.update_graph_node(obj.id, node.id)
 
             # Connect to source
-            from sovereign_memory_bank.graph.graph_store import GraphEdge
-            from sovereign_memory_bank.models.enums import NodeEdgeType
-
             self.graph.add_edge(
                 GraphEdge(
                     source=f"source-{source_id}",

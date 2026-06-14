@@ -71,16 +71,16 @@ class MemoryObject(BaseModel):
     def from_yaml_header(cls, data: dict, body: str = "") -> "MemoryObject":
         """Create from parsed YAML header data."""
         kwargs = {
-            "id": data.get("id", _uuid()),
+            "id": str(data.get("id", _uuid())),
             "type": MemoryType(data.get("type", "concept")),
-            "confidence": float(data.get("confidence", 0.5)),
+            "confidence": float(data.get("confidence") or 0.5),
             "status": MemoryStatus(data.get("status", "active")),
             "embedding_id": data.get("embedding_id"),
             "graph_node_id": data.get("graph_node_id"),
-            "title": data.get("title", ""),
+            "title": data.get("title") or "",
             "description": body.strip(),
-            "source_ids": data.get("source_ids", []),
-            "tags": data.get("tags", []),
+            "source_ids": data.get("source_ids") or [],
+            "tags": data.get("tags") or [],
         }
         if "created" in data:
             created = data["created"]

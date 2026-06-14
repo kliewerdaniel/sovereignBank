@@ -42,8 +42,36 @@ class MarkdownStore:
         parts = content.split("---", 2)
         if len(parts) < 3:
             return {}, content
-        header_data = yaml.safe_load(parts[1]) or {}
+        raw_header = parts[1]
         body = parts[2].strip()
+
+        # Try standard YAML parse first
+        try:
+            header_data = yaml.safe_load(raw_header) or {}
+            return header_data, body
+        except yaml.YAMLError:
+            pass
+
+        # Fallback: line-by-line key: value parsing
+        header_data = {}
+        for line in raw_header.strip().split("\n"):
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if ":" in line:
+                key, _, value = line.partition(":")
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                # Handle list items
+                if value.startswith("[") and value.endswith("]"):
+                    import ast
+                    try:
+                        value = ast.literal_eval(value)
+                    except (ValueError, SyntaxError):
+                        pass
+                elif value == "":
+                    value = None
+                header_data[key] = value
         return header_data, body
 
     def save(self, obj: MemoryObject) -> Path:
@@ -78,9 +106,12 @@ class MarkdownStore:
         dir_path = self.layers.get_subdir(layer_idx, subdir)
         objects = []
         for md_file in sorted(dir_path.glob("*.md")):
-            content = md_file.read_text()
-            header_data, body = self._parse_yaml_header(content)
-            objects.append(deserialize_memory(header_data, body))
+            try:
+                content = md_file.read_text()
+                header_data, body = self._parse_yaml_header(content)
+                objects.append(deserialize_memory(header_data, body))
+            except Exception:
+                continue  # Skip unparseable files
         return objects
 
     def list_all(self) -> list[MemoryObject]:
