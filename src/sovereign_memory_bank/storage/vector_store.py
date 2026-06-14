@@ -105,7 +105,10 @@ class VectorStore:
         if where:
             kwargs["where"] = where
 
-        results = self._collection.query(**kwargs)
+        try:
+            results = self._collection.query(**kwargs)
+        except Exception:
+            return []  # Graceful fallback for dimension mismatches etc.
 
         items = []
         ids = results.get("ids", [[]])[0]
