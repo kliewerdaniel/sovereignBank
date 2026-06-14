@@ -8,14 +8,15 @@ Generated: 2026-06-14
 ## Phase 1: Foundation & Core Data Models
 
 ### [P] Task 1: Project Scaffolding
-Status: [ ] pending
-Files to create/modify:
+Status: [x] completed — 2026-06-14
+Completed: Project installs with `pip install -e .`, all imports resolve
+Files created:
   - pyproject.toml
-  - src/__init__.py
-  - src/config.py
-  - src/models/__init__.py
+  - src/sovereign_memory_bank/__init__.py
+  - src/sovereign_memory_bank/config.py
+  - src/sovereign_memory_bank/cli.py
+  - src/sovereign_memory_bank/models/__init__.py
 Dependencies: None
-Acceptance: Project installs with `pip install -e .`, all imports resolve
 
 ### [P] Task 2: Memory Object Data Models (Pydantic)
 Status: [ ] pending

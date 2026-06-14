@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sovereign-memory-bank"
+version = "0.1.0"
+description = "Autonomous cognitive memory system for agent reasoning and knowledge synthesis"
+readme = "spec.md"
+license = "MIT"
+requires-python = ">=3.13"
+authors = [
+    { name = "Daniel Kliewer" }
+]
+keywords = ["memory", "cognitive-systems", "agent-reasoning", "knowledge-graph", "local-first"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.10.0",
+    "chromadb>=0.6.0",
+    "aiosqlite>=0.20.0",
+    "pyyaml>=6.0",
+    "httpx>=0.28.0",
+    "python-multipart>=0.0.18",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.8.0",
+]
+
+[project.scripts]
+smb = "sovereign_memory_bank.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sovereign_memory_bank"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

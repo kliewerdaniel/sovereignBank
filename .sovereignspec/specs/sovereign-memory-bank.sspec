@@ -1,7 +1,7 @@
 id: sovereign-memory-bank
 title: Sovereign Memory Bank
 version: 0.1.0
-status: approved
+status: implemented
 purpose: >
   Build an autonomous cognitive memory system that ingests kbmd/ markdown
   documents and creates a continuously evolving memory architecture
